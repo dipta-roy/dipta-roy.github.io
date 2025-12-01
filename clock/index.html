@@ -1,0 +1,102 @@
+<html>
+	<head>
+		<title> Digital Clock</title>
+		<link rel="icon" href="images/clock.png" type="image/x-icon" />
+		<meta name="description" content="Digital Clock designed to use as screensaver. Kindly change  view to sull screen using F11 and enjoy this. For more details contact Dipta at https://www.diptaroy.tk">
+		<meta name="author" content="Dipta Roy">
+		<script type="text/javascript" src="../snake/jquery-1.5.2.min.js"></script>
+		<script type="text/javascript">
+			$(document).ready(function() {
+				var monthNames = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]; 
+				var dayNames= ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+				var newDate = new Date();
+				newDate.setDate(newDate.getDate());
+				$('#Date').html(dayNames[newDate.getDay()] + " " + newDate.getDate() + ' ' + monthNames[newDate.getMonth()] + ' ' + newDate.getFullYear());
+				setInterval( function() {
+					var seconds = new Date().getSeconds();
+					$("#sec").html(( seconds < 10 ? "0" : "" ) + seconds);
+				},1000);
+				setInterval( function() {
+					var minutes = new Date().getMinutes();
+					$("#min").html(( minutes < 10 ? "0" : "" ) + minutes);
+				},1000);
+				setInterval( function() {
+					var hours = new Date().getHours();
+					$("#hours").html(( hours < 10 ? "0" : "" ) + hours);
+					}, 1000); 
+				});
+		</script>
+		<style>
+			.clock {
+				width: 660px;
+				margin: 0 auto;
+				margin-top:100px;
+				padding: 30px;
+				color: #FFF;
+				background:#000;
+				box-shadow: 0 1px 10px #55c6ff, 0 1px 10px #55c6ff;
+			}
+			#body	{
+				background:#000;
+			}
+			.clock ul {
+				width: 550px;
+				margin: 0 auto;
+				padding: 0;
+				list-style: none;
+				text-align: center
+			}
+			.clock ul li {
+				display: inline;
+				font-size: 5em;
+				text-align: center;
+				font-family: "Arial", Helvetica, sans-serif;
+				text-shadow: 0 2px 5px #55c6ff, 0 3px 6px #55c6ff, 0 4px 7px #55c6ff
+			}
+			#Date { 
+				font-family: 'Arial', Helvetica, sans-serif;
+				font-size: 46px;
+				text-align: center;
+				text-shadow: 0 2px 5px #55c6ff, 0 3px 6px #55c6ff;
+				padding-bottom: 40px;
+			}
+
+			#point {
+				position: relative;
+				-moz-animation: mymove 1s ease infinite;
+				-webkit-animation: mymove 1s ease infinite;
+				padding-left: 10px;
+				padding-right: 10px
+			}
+
+			@-webkit-keyframes mymove {
+				0% {opacity:1.0; text-shadow:0 0 20px #00c6ff;}
+				50% {opacity:0; text-shadow:none; }
+				100% {opacity:1.0; text-shadow:0 0 20px #00c6ff; } 
+			}
+
+			@-moz-keyframes mymove {
+				0% {opacity:1.0; text-shadow:0 0 20px #00c6ff;}
+				50% {opacity:0; text-shadow:none; }
+				100% {opacity:1.0; text-shadow:0 0 20px #00c6ff; } 
+			}
+			fieldset	{
+				widhh:50%;
+				box-shadow: 0 2px 5px #55c6ff, 0 3px 6px #55c6ff;
+				
+			}
+		</style>
+	</head>
+	<body id="body">
+		<div class="clock">
+			<div id="Date"></div>
+			<ul>
+				<li id="hours"></li>
+				<li id="point">:</li>
+				<li id="min"></li>
+				<li id="point">:</li>
+				<li id="sec"></li>
+			</ul>
+		</div>
+	</body>
+</html>
