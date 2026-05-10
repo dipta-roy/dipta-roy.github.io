@@ -1813,15 +1813,8 @@ ul {
         left: -50px;
         right: auto;
     }
-}
 
-@media (max-width: 768px) {
-    :root {
-        --spacing-xl: 1.5rem;
-        --spacing-2xl: 2.5rem;
-        --spacing-3xl: 3.5rem;
-    }
-
+    /* Mobile Navigation at 1024px */
     .nav-content {
         padding: var(--spacing-sm) var(--spacing-md);
     }
@@ -1881,6 +1874,14 @@ ul {
 
     .mobile-menu-toggle.active span:nth-child(3) {
         transform: rotate(-45deg) translate(7px, -7px);
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --spacing-xl: 1.5rem;
+        --spacing-2xl: 2.5rem;
+        --spacing-3xl: 3.5rem;
     }
 
     .hero-title {
