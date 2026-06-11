@@ -39,7 +39,8 @@ document.addEventListener('click', (e) => {
 // ==========================================
 // SMOOTH SCROLL & ACTIVE LINK HIGHLIGHTING
 // ==========================================
-navLinks.forEach(link => {
+const scrollLinks = document.querySelectorAll('.nav-link, .footer-links a');
+scrollLinks.forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
         const targetId = link.getAttribute('href');
@@ -413,7 +414,8 @@ filterBtns.forEach(btn => {
         const filterValue = btn.getAttribute('data-filter');
 
         projectCards.forEach(card => {
-            if (filterValue === 'all' || card.getAttribute('data-category') === filterValue) {
+            const categories = card.getAttribute('data-category') ? card.getAttribute('data-category').split(' ') : [];
+            if (filterValue === 'all' || categories.includes(filterValue)) {
                 card.style.display = 'block'; // Changed to block to match CSS
                 // Add animation for appearing
                 card.style.animation = 'fadeIn 0.5s ease-out forwards';
