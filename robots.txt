@@ -1,6 +1,9 @@
 User-agent: *
 Disallow: /downloads/
 Allow: index.html
+Allow: career-map.html
 Allow: chess/
 Allow: snake/
 Allow: clock/
+
+Sitemap: https://dipta-roy.github.io/sitemap.xml

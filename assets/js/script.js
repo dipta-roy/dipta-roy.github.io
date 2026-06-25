@@ -102,7 +102,7 @@ const observer = new IntersectionObserver((entries) => {
 
 // Observe all timeline items and cards
 const animatedElements = document.querySelectorAll(
-    '.timeline-item, .skill-category, .project-card, .cert-card, .publication-item, .contact-card'
+    '.timeline-item, .skill-category, .github-card, .download-card, .cert-card, .publication-item, .contact-card'
 );
 
 animatedElements.forEach(el => {
@@ -238,22 +238,7 @@ if (heroSubtitle) {
     setTimeout(type, 1000);
 }
 
-// ==========================================
-// CURSOR TRAIL EFFECT (SUBTLE)
-// ==========================================
-let cursorTrail = [];
-const maxTrailLength = 20;
 
-document.addEventListener('mousemove', (e) => {
-    cursorTrail.push({ x: e.clientX, y: e.clientY, time: Date.now() });
-
-    // Remove old trail points
-    cursorTrail = cursorTrail.filter(point => Date.now() - point.time < 500);
-
-    if (cursorTrail.length > maxTrailLength) {
-        cursorTrail.shift();
-    }
-});
 
 // ==========================================
 // EASTER EGG: KONAMI CODE
@@ -349,33 +334,16 @@ function createConfetti(color) {
 // PAGE LOAD ANIMATION
 // ==========================================
 window.addEventListener('load', () => {
-    document.body.style.opacity = '0';
-    document.body.style.transition = 'opacity 0.5s ease-in';
-
-    setTimeout(() => {
-        document.body.style.opacity = '1';
-    }, 100);
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+        preloader.classList.add('fade-out');
+        setTimeout(() => {
+            preloader.remove();
+        }, 500);
+    }
 });
 
-// ==========================================
-// PERFORMANCE: LAZY LOADING OPTIMIZATION
-// ==========================================
-if ('IntersectionObserver' in window) {
-    const lazyImages = document.querySelectorAll('img[data-src]');
 
-    const imageObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                img.src = img.dataset.src;
-                img.removeAttribute('data-src');
-                imageObserver.unobserve(img);
-            }
-        });
-    });
-
-    lazyImages.forEach(img => imageObserver.observe(img));
-}
 
 // ==========================================
 // ACCESSIBILITY: KEYBOARD NAVIGATION
@@ -416,12 +384,38 @@ filterBtns.forEach(btn => {
         projectCards.forEach(card => {
             const categories = card.getAttribute('data-category') ? card.getAttribute('data-category').split(' ') : [];
             if (filterValue === 'all' || categories.includes(filterValue)) {
-                card.style.display = 'block'; // Changed to block to match CSS
+                card.classList.remove('hidden');
                 // Add animation for appearing
                 card.style.animation = 'fadeIn 0.5s ease-out forwards';
             } else {
-                card.style.display = 'none';
+                card.classList.add('hidden');
             }
         });
+    });
+});
+
+// ==========================================
+// CLICK TO COPY CHECKSUM
+// ==========================================
+const checksumElements = document.querySelectorAll('.checksum-value');
+
+checksumElements.forEach(element => {
+    element.addEventListener('click', () => {
+        const codeElement = element.querySelector('code');
+        if (codeElement) {
+            const hashText = codeElement.textContent.trim();
+            navigator.clipboard.writeText(hashText).then(() => {
+                const originalHTML = element.innerHTML;
+                element.innerHTML = `<span style="color: var(--color-primary-light); font-weight: bold;"><i class="fas fa-check-circle"></i> Copied Hash!</span>`;
+                element.style.pointerEvents = 'none';
+                
+                setTimeout(() => {
+                    element.innerHTML = originalHTML;
+                    element.style.pointerEvents = 'auto';
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
     });
 });

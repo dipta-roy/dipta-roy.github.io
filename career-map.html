@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Cybersecurity Career Map | Dipta Roy</title>
+    <meta name="description" content="Explore cybersecurity career pathways interactively. Discover domains, certifications, job roles, and learning paths in an immersive network graph.">
+    <link rel="icon" type="image/png" href="assets/img/favicon.png?v=4">
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Vis.js Network CDN -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #020617;
+            --bg-gradient: linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%);
+            --panel-bg: rgba(15, 23, 42, 0.85);
+            --panel-border: rgba(148, 163, 184, 0.1);
+            --panel-border-hover: rgba(148, 163, 184, 0.2);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-rose: #f43f5e;
+            --accent-purple: #8b5cf6;
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-heading: 'Space Grotesk', sans-serif;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+            --transition-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { box-sizing: border-box; }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-main);
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+        }
+
+        /* ===== LOADING SCREEN ===== */
+        .loader-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        .loader-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .loader-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            animation: loaderPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes loaderPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            50% { transform: scale(1.08); box-shadow: 0 0 24px 8px rgba(59, 130, 246, 0.15); }
+        }
+        .loader-text {
+            font-family: var(--font-heading);
+            font-size: 14px;
+            color: var(--text-secondary);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .loader-bar {
+            width: 200px;
+            height: 3px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .loader-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* ===== ANIMATED BACKGROUND ===== */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.07;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+        .bg-orb:nth-child(1) {
+            width: 600px; height: 600px;
+            background: var(--accent-blue);
+            top: -10%; left: -5%;
+            animation-delay: 0s;
+        }
+        .bg-orb:nth-child(2) {
+            width: 500px; height: 500px;
+            background: var(--accent-purple);
+            bottom: -10%; right: -5%;
+            animation-delay: -7s;
+        }
+        .bg-orb:nth-child(3) {
+            width: 400px; height: 400px;
+            background: var(--accent-cyan);
+            top: 50%; left: 40%;
+            animation-delay: -14s;
+        }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -40px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(15px, 35px) scale(1.02); }
+        }
+
+        /* Grid overlay */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+        }
+
+        /* ===== VIS NETWORK ===== */
+        #mynetwork {
+            width: 100%;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* ===== GLASS PANEL BASE ===== */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px) saturate(1.2);
+            -webkit-backdrop-filter: blur(20px) saturate(1.2);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-md);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.03);
+            z-index: 10;
+        }
+
+        /* ===== HUD HEADER ===== */
+        .hud-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 20px 24px 16px;
+            width: 370px;
+            max-width: calc(100vw - 40px);
+        }
+
+        .hud-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .hud-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 0 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .hud-titles h1 {
+            margin: 0;
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        .hud-titles .hud-subtitle {
+            margin: 2px 0 0 0;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .hud-desc {
+            margin: 0 0 16px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Search Box */
+        .search-container {
+            position: relative;
+            margin-bottom: 14px;
+        }
+
+        .search-container i.search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 13px;
+            transition: color 0.2s;
+        }
+
+        .search-container:focus-within i.search-icon {
+            color: var(--accent-blue);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 11px 40px 11px 40px;
+            background: rgba(2, 6, 23, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-family: var(--font-main);
+            font-size: 13px;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.25s ease;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-input:focus {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 2px rgba(0,0,0,0.2);
+            background: rgba(2, 6, 23, 0.8);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px;
+            display: none;
+            transition: color 0.2s;
+        }
+        .search-clear:hover { color: #fff; }
+        .search-clear.visible { display: block; }
+
+        /* Keyboard hint */
+        .search-hint {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+        .kbd {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 4px;
+            font-size: 10px;
+            font-family: var(--font-main);
+            color: var(--text-secondary);
+            line-height: 1;
+        }
+
+        /* Category Filter Pills */
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 14px;
+        }
+
+        .filter-pill {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            letter-spacing: 0.01em;
+        }
+
+        .pill-all { background: rgba(148, 163, 184, 0.1); color: var(--text-secondary); border-color: rgba(148, 163, 184, 0.15); }
+        .pill-core { background: rgba(59, 130, 246, 0.1); color: #93c5fd; border-color: rgba(59, 130, 246, 0.2); }
+        .pill-primary { background: rgba(16, 185, 129, 0.1); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.2); }
+        .pill-mid { background: rgba(245, 158, 11, 0.1); color: #fcd34d; border-color: rgba(245, 158, 11, 0.2); }
+        .pill-role { background: rgba(244, 63, 94, 0.1); color: #fda4af; border-color: rgba(244, 63, 94, 0.2); }
+
+        .filter-pill:hover {
+            filter: brightness(1.3);
+            transform: translateY(-1px);
+        }
+        .filter-pill.active {
+            border-color: rgba(255,255,255,0.35);
+            filter: brightness(1.4);
+            box-shadow: 0 0 8px rgba(255,255,255,0.05);
+        }
+
+        /* ===== STATS BAR ===== */
+        .stats-bar {
+            display: flex;
+            gap: 2px;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .stat-cell {
+            flex: 1;
+            text-align: center;
+            padding: 6px 4px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .stat-cell:hover { background: rgba(255,255,255,0.03); }
+        .stat-value {
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .stat-cell:nth-child(1) .stat-value { color: #93c5fd; }
+        .stat-cell:nth-child(2) .stat-value { color: #6ee7b7; }
+        .stat-cell:nth-child(3) .stat-value { color: #fcd34d; }
+        .stat-cell:nth-child(4) .stat-value { color: #fda4af; }
+
+        /* ===== HUD CONTROLS ===== */
+        .hud-controls {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-md);
+            padding: 6px;
+        }
+
+        .ctrl-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .ctrl-btn:hover {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent-blue);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .ctrl-btn.active {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border-color: rgba(16, 185, 129, 0.25);
+        }
+
+        .ctrl-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+            margin: 2px 6px;
+        }
+
+        /* Tooltip */
+        .ctrl-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 6px 10px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: var(--font-main);
+            color: var(--text-primary);
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            transform: translateY(-50%) translateX(-4px);
+        }
+        .ctrl-btn:hover::after {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+
+        /* ===== BREADCRUMB ===== */
+        .breadcrumb-bar {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            z-index: 10;
+            padding: 8px 16px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0;
+            transition: all 0.4s var(--transition-smooth);
+            pointer-events: none;
+            max-width: calc(100vw - 200px);
+            overflow: hidden;
+        }
+        .breadcrumb-bar.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+        .breadcrumb-bar .bc-item {
+            white-space: nowrap;
+            color: var(--text-muted);
+        }
+        .breadcrumb-bar .bc-item.active {
+            color: #fff;
+            font-weight: 600;
+        }
+        .breadcrumb-bar .bc-sep {
+            color: var(--text-muted);
+            font-size: 10px;
+        }
+
+        /* ===== KEYBOARD SHORTCUT BADGE ===== */
+        .shortcut-badge {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10;
+            padding: 8px 14px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+        .shortcut-badge:hover { opacity: 1; }
+        .shortcut-badge .sc-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ===== DETAIL SIDEBAR ===== */
+        .detail-sidebar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            bottom: 20px;
+            width: 420px;
+            max-width: calc(100vw - 40px);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            transform: translateX(460px);
+            transition: transform 0.5s var(--transition-smooth);
+            overflow: hidden;
+        }
+
+        .detail-sidebar.open {
+            transform: translateX(0);
+        }
+
+        /* Sidebar header */
+        .sidebar-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .sidebar-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-close:hover {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--accent-rose);
+            border-color: rgba(244, 63, 94, 0.2);
+        }
+
+        /* Sidebar scrollable content */
+        .sidebar-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px 24px;
+        }
+
+        /* Custom scrollbar */
+        .sidebar-body::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-body::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.08);
+            border-radius: 3px;
+        }
+        .sidebar-body::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* Sidebar content details */
+        .node-category {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+
+        .node-category i { font-size: 8px; }
+
+        .node-category.core { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+        .node-category.primary { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+        .node-category.mid { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+        .node-category.role { background: rgba(244, 63, 94, 0.12); color: #f87171; }
+
+        .node-title {
+            font-family: var(--font-heading);
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            margin: 10px 0 0 0;
+            line-height: 1.25;
+        }
+
+        .section-block {
+            margin-top: 24px;
+        }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin: 0 0 10px 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title i {
+            font-size: 12px;
+            opacity: 0.5;
+        }
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.04);
+        }
+
+        .node-desc {
+            font-size: 13.5px;
+            color: #cbd5e1;
+            line-height: 1.65;
+            margin: 0;
+        }
+
+        /* Tags and lists */
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag-pill {
+            font-size: 12px;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 20px;
+            color: #e2e8f0;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tag-pill i { font-size: 10px; opacity: 0.5; }
+
+        .tag-pill:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        .tag-pill.accent {
+            border-color: rgba(59, 130, 246, 0.2);
+            background: rgba(59, 130, 246, 0.06);
+            color: #93c5fd;
+        }
+        .tag-pill.accent:hover {
+            background: rgba(59, 130, 246, 0.12);
+        }
+
+        .path-step {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            background: rgba(59, 130, 246, 0.04);
+            padding: 14px 16px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--accent-blue);
+            position: relative;
+        }
+        .path-step::before {
+            content: '→';
+            position: absolute;
+            left: -1px;
+            top: 14px;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: var(--accent-blue);
+            background: var(--panel-bg);
+            padding: 2px;
+            display: none;
+        }
+
+        /* Sidebar Placeholder */
+        .sidebar-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px 30px;
+        }
+
+        .sidebar-placeholder .ph-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+
+        .sidebar-placeholder h3 {
+            font-family: var(--font-heading);
+            font-size: 16px;
+            color: var(--text-primary);
+            margin: 0 0 8px 0;
+        }
+
+        .sidebar-placeholder p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* Connected nodes list */
+        .connected-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .connected-item {
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid transparent;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .connected-item:hover {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(59, 130, 246, 0.15);
+            color: #fff;
+        }
+        .connected-item .ci-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .connected-item .ci-arrow {
+            margin-left: auto;
+            font-size: 10px;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .connected-item:hover .ci-arrow { opacity: 0.6; }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .hud-header {
+                top: 12px;
+                left: 12px;
+                width: calc(100vw - 24px);
+                padding: 16px;
+                max-height: 45vh;
+                overflow-y: auto;
+            }
+            .detail-sidebar {
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: 100vw;
+                max-width: 100vw;
+                border-radius: 0;
+                transform: translateX(100vw);
+                z-index: 999;
+                background: rgba(15, 23, 42, 0.98); /* Ensure it's opaque enough to hide background on mobile */
+            }
+            .hud-controls {
+                bottom: 16px;
+                left: 16px;
+                z-index: 5;
+            }
+            .shortcut-badge { display: none; }
+            .breadcrumb-bar { display: none; }
+            .stats-bar { display: none; }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in {
+            animation: fadeInUp 0.5s var(--transition-smooth) forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading screen -->
+    <div class="loader-overlay" id="loader">
+        <div class="loader-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="loader-text">Mapping Career Pathways</div>
+        <div class="loader-bar"><div class="loader-bar-fill" id="loaderFill"></div></div>
+    </div>
+
+    <!-- Animated background -->
+    <div class="bg-canvas">
+        <div class="bg-orb"></div>
+        <div class="bg-orb"></div>
+        <div class="bg-orb"></div>
+    </div>
+    <div class="bg-grid"></div>
+
+    <!-- HUD Header Panel -->
+    <div class="hud-header glass-panel" id="hudHeader" style="opacity:0;">
+        <div class="hud-brand">
+            <div class="hud-logo"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="hud-titles">
+                <h1>Cybersecurity Career Map</h1>
+                <div class="hud-subtitle">Interactive Career Pathway Explorer</div>
+            </div>
+        </div>
+
+        <p class="hud-desc">Navigate career domains, discover certifications, and explore job roles across the cybersecurity landscape.</p>
+
+        <!-- Search bar -->
+        <div class="search-container">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="nodeSearch" class="search-input" placeholder="Search domains, roles, certs...">
+            <button class="search-clear" id="searchClear" onclick="clearSearch()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="search-hint">
+            <span>Press</span> <span class="kbd">Enter</span> <span>to focus first result</span>
+            <span style="margin-left:auto;"><span class="kbd">Esc</span> clear</span>
+        </div>
+
+        <!-- Filter pills -->
+        <div class="filter-group">
+            <div class="filter-pill pill-all active" id="f-all" onclick="filterCategory('all')"><i class="fa-solid fa-circle-nodes" style="font-size:10px;"></i> All</div>
+            <div class="filter-pill pill-core" id="f-core" onclick="filterCategory('core')"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Core</div>
+            <div class="filter-pill pill-primary" id="f-primary" onclick="filterCategory('primary')"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Primary</div>
+            <div class="filter-pill pill-mid" id="f-mid" onclick="filterCategory('mid')"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Mid Level</div>
+            <div class="filter-pill pill-role" id="f-role" onclick="filterCategory('role')"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Roles</div>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="stats-bar">
+            <div class="stat-cell">
+                <div class="stat-value">1</div>
+                <div class="stat-label">Core</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-value">10</div>
+                <div class="stat-label">Domains</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-value">26</div>
+                <div class="stat-label">Specialties</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-value">30</div>
+                <div class="stat-label">Roles</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas Network -->
+    <div id="mynetwork"></div>
+
+    <!-- HUD Controls -->
+    <div class="hud-controls" id="hudControls" style="opacity:0;">
+        <button class="ctrl-btn" onclick="zoomIn()" data-tooltip="Zoom In"><i class="fa-solid fa-plus"></i></button>
+        <button class="ctrl-btn" onclick="zoomOut()" data-tooltip="Zoom Out"><i class="fa-solid fa-minus"></i></button>
+        <div class="ctrl-divider"></div>
+        <button class="ctrl-btn" onclick="resetView()" data-tooltip="Fit to Screen"><i class="fa-solid fa-expand"></i></button>
+        <button class="ctrl-btn" id="physicsToggleBtn" onclick="togglePhysics()" data-tooltip="Layout Locked"><i class="fa-solid fa-lock"></i></button>
+    </div>
+
+    <!-- Breadcrumb bar -->
+    <div class="breadcrumb-bar" id="breadcrumb"></div>
+
+    <!-- Keyboard shortcuts -->
+    <div class="shortcut-badge" id="shortcutBadge" style="opacity:0;">
+        <div class="sc-group"><span class="kbd">/</span> Search</div>
+        <div class="sc-group"><span class="kbd">Esc</span> Close</div>
+        <div class="sc-group"><span class="kbd">F</span> Fit</div>
+    </div>
+
+    <!-- Sliding Sidebar details -->
+    <div id="detailSidebar" class="detail-sidebar glass-panel">
+        <div class="sidebar-header" id="sidebarHeader">
+            <button class="sidebar-close" onclick="closeSidebar()"><i class="fa-solid fa-xmark"></i></button>
+            <div id="sidebarPlaceholder" class="sidebar-placeholder" style="padding-top: 60px;">
+                <div class="ph-icon"><i class="fa-solid fa-route"></i></div>
+                <h3>Explore a Career Path</h3>
+                <p>Click on any node in the network to reveal detailed career information, certifications, and growth trajectories.</p>
+            </div>
+        </div>
+
+        <div id="sidebarContent" style="display: none;">
+            <div class="sidebar-header" style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                <button class="sidebar-close" onclick="closeSidebar()"><i class="fa-solid fa-xmark"></i></button>
+                <span id="nodeCategoryTag" class="node-category">Core Domain</span>
+                <h2 id="nodeTitle" class="node-title">Role Title</h2>
+            </div>
+            <div class="sidebar-body">
+                <div class="section-block">
+                    <div class="section-title"><i class="fa-solid fa-align-left"></i> Overview</div>
+                    <p id="nodeDesc" class="node-desc">Description of this branch/role.</p>
+                </div>
+
+                <div class="section-block">
+                    <div class="section-title"><i class="fa-solid fa-briefcase"></i> Key Roles</div>
+                    <div id="nodeRoles" class="tag-list"></div>
+                </div>
+
+                <div class="section-block">
+                    <div class="section-title"><i class="fa-solid fa-screwdriver-wrench"></i> Key Skills</div>
+                    <div id="nodeSkills" class="tag-list"></div>
+                </div>
+
+                <div class="section-block">
+                    <div class="section-title"><i class="fa-solid fa-award"></i> Certifications</div>
+                    <div id="nodeCerts" class="tag-list"></div>
+                </div>
+
+                <div class="section-block">
+                    <div class="section-title"><i class="fa-solid fa-route"></i> Suggested Path</div>
+                    <div id="nodePath" class="path-step">
+                        Suggested learning curve details.
+                    </div>
+                </div>
+
+                <div class="section-block" id="connectedSection" style="display:none;">
+                    <div class="section-title"><i class="fa-solid fa-diagram-project"></i> Connected Nodes</div>
+                    <div id="connectedList" class="connected-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // =============================================
+        // NODE DETAILS DATA
+        // =============================================
+        const nodeDetails = {
+            'core': {
+                title: 'Careers in Cybersecurity',
+                category: 'core',
+                categoryLabel: 'Core Entryway',
+                desc: 'The complete professional ecosystem of cybersecurity careers. This spans highly technical operations, policy governance, developer integration, and executive risk analysis.',
+                roles: ['Security Analyst', 'Security Engineer', 'CISO'],
+                certs: ['CompTIA Security+', 'CISSP', 'CISM'],
+                skills: ['Networking', 'Operating Systems', 'Risk Analysis', 'Problem Solving', 'Ethics'],
+                path: 'Start with foundational IT knowledge (networking, system administration) before specializing.'
+            },
+            'p_train': {
+                title: 'Training & Education',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'Developing training models, secure guidelines, and academic courses to bolster organizational cyber defense readiness and professional growth.',
+                roles: ['Security Awareness Manager', 'Cybersecurity Instructor', 'Technical Educator'],
+                certs: ['CompTIA Security+', 'SANS SEC301', 'Certified EC-Council Instructor (CEI)'],
+                skills: ['Public Speaking', 'Curriculum Design', 'Technical Writing', 'Mentoring'],
+                path: 'Gain foundational IT experience, then transition to educational program creation and mentoring.'
+            },
+            'p_design': {
+                title: 'Security By Design',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'Integrating proactive defense protocols directly into applications, infrastructure, and architectural layouts right from the draft/design phase.',
+                roles: ['Security Architect', 'Product Security Engineer', 'Systems Engineer'],
+                certs: ['CSSLP', 'SABSA', 'CISSP-ISSAP'],
+                skills: ['Secure Software Development Life Cycle (SDLC)', 'Architecture Review', 'Threat Modeling'],
+                path: 'Pivot from classical software development or systems engineering directly into security design engineering.'
+            },
+            'p_secarch': {
+                title: 'Security Architecture & Design',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'Planning and building the foundational structures that keep corporate networks and software secure from the ground up.',
+                roles: ['Security Architect', 'Solutions Architect'],
+                certs: ['CSSLP', 'SABSA', 'CISSP-ISSAP'],
+                skills: ['System Design', 'Threat Modeling', 'Cloud Architecture', 'Zero Trust'],
+                path: 'Pivot from classical software development or systems engineering directly into security design engineering.'
+            },
+            'p_grc': {
+                title: 'Governance, Risk & Compliance',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'Managing corporate IT risks, aligning systems with legal mandates, and governing cyber programs. Crucial for ensuring the business operates legally.',
+                roles: ['GRC Analyst', 'Compliance Auditor', 'ISO'],
+                certs: ['CISA', 'CRISC', 'CISM'],
+                skills: ['Risk Assessment', 'Auditing', 'Regulatory Frameworks (ISO, NIST)', 'Policy Writing'],
+                path: 'Ideal entry point for analytical professionals, lawyers, and auditors wanting a foothold in IT security.'
+            },
+            'p_ai': {
+                title: 'AI / ML Security',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'Securing machine learning pipelines, preventing model injection/poisoning, and designing ethical AI guardrails.',
+                roles: ['AI Security Engineer', 'MLSecOps Specialist'],
+                certs: ['Certified AI Security Professional', 'Google Cloud ML Engineer'],
+                skills: ['Machine Learning', 'Python', 'Data Science', 'Adversarial AI'],
+                path: 'Combine data science knowledge with DevSecOps methodologies and LLM vulnerability assessment.'
+            },
+            'p_ops': {
+                title: 'Security Operations',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'Real-time defense operations, system health checks, continuous log auditing, and immediate response to threat occurrences.',
+                roles: ['SOC Analyst', 'Incident Responder', 'SOC Lead'],
+                certs: ['CompTIA CySA+', 'GCIH', 'CEH'],
+                skills: ['Network Monitoring', 'Log Analysis', 'Incident Response', 'SIEM Tools'],
+                path: 'Start as a Helpdesk or Network admin, progress to L1 SOC analyst, then specialize.'
+            },
+            'p_off_def': {
+                title: 'Offensive and Defensive Security',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'A comprehensive category covering penetration testing (Red Team) and deep network protection (Blue Team) actions.',
+                roles: ['Red Teamer', 'Penetration Tester', 'Blue Teamer'],
+                certs: ['OSCP', 'CEH', 'GCIH'],
+                skills: ['Ethical Hacking', 'Exploit Development', 'Defensive Hardening', 'Scripting'],
+                path: 'Build solid networking and OS configuration foundations first before diving into exploits.'
+            },
+            'p_infra': {
+                title: 'Infrastructure & Endpoint Security',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'Securing servers, endpoints, routers, networks, and perimeter firewalls to safeguard core operations.',
+                roles: ['Infrastructure Security Engineer', 'Network Security Engineer'],
+                certs: ['CCNP Security', 'CompTIA Network+'],
+                skills: ['Firewall Management', 'Routing & Switching', 'Endpoint Protection', 'Linux/Windows Admin'],
+                path: 'Start as network administrator, focus on routing and firewalls, then advance to security architectures.'
+            },
+            'p_iot': {
+                title: 'IoT and OT Security',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'Securing hardware systems, embedded firmware, SCADA, and critical manufacturing or medical operations tech.',
+                roles: ['OT Security Specialist', 'IoT Firmware Engineer'],
+                certs: ['GICSP', 'GRID'],
+                skills: ['Embedded Systems', 'SCADA/ICS Protocols', 'Hardware Reverse Engineering', 'C/C++'],
+                path: 'Background in electrical engineering or embedded systems. Specialize in hardware protocol fuzzing.'
+            },
+            'p_vuln': {
+                title: 'Vulnerability Management & AppSec',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'Finding weaknesses in source code, managing threat scans, and testing systems to prevent threat execution.',
+                roles: ['AppSec Engineer', 'Vulnerability Manager'],
+                certs: ['CSSLP', 'CASE'],
+                skills: ['Secure Coding', 'Vulnerability Scanning', 'Patch Management', 'OWASP Top 10'],
+                path: 'Crucial for developers looking to specialize in securing pipelines and dependency audits.'
+            },
+            'm_sme': { title: 'SME / Security Training', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Subject Matter Expert leading tailored curriculum design and developer training.', roles: ['Security Consultant', 'SME'], certs: ['CISM', 'CISSP'], skills: ['Public Speaking', 'Curriculum Design', 'Mentoring', 'Deep Technical Knowledge'], path: 'Focus on coding guidelines and threat awareness programs.' },
+            'm_arch': { title: 'Secure Architecture', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Designing boundaries, trusted zones, and cryptographic backbones.', roles: ['Enterprise Security Architect'], certs: ['CISSP-ISSAP', 'TOGAF'], skills: ['Enterprise Architecture', 'Threat Modeling', 'Cloud Infrastructure'], path: 'Requires deep infrastructure design background.' },
+            'm_devsec': { title: 'DevSecOps', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Automating security scanning toolchains directly within CI/CD pipelines.', roles: ['DevSecOps Engineer'], certs: ['DCOP', 'AWS Security'], skills: ['CI/CD (Jenkins/GitLab)', 'Docker/K8s', 'Python/Bash Scripting', 'Infrastructure as Code'], path: 'Master scripting, CI/CD tools, and container security.' },
+            'm_rm': { title: 'Risk Management', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Evaluating company risks, identifying threat surfaces, and planning mitigation.', roles: ['Risk Manager'], certs: ['CRISC', 'CISM'], skills: ['Risk Quantification (FAIR)', 'Business Continuity', 'Data Analysis'], path: 'Focus on threat assessments and quantitative risk frameworks.' },
+            'm_dlp': { title: 'Data Loss Prevention', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Setting rules to prevent leakage of sensitive company assets or health records.', roles: ['DLP Administrator'], certs: ['CIPP', 'Security+'], skills: ['Data Classification', 'Regex Parsing', 'Endpoint Monitoring'], path: 'Develop policies mapping data flow patterns.' },
+            'm_reg': { title: 'Regulatory & Compliance', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Auditing infrastructure against frameworks like HIPAA, ISO27001, and SOC2.', roles: ['Compliance Manager', 'Auditor'], certs: ['CISA', 'ISO 27001 Lead Auditor'], skills: ['Regulatory Knowledge', 'Audit Execution', 'Documentation'], path: 'Become expert in documentation mapping and control validation.' },
+            'm_aigov': { title: 'AI Governance', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Implementing audits to govern AI use cases ethically and legally.', roles: ['AI Compliance Lead'], certs: ['IAPP AIGP'], skills: ['AI Ethics', 'Legal Frameworks', 'Model Transparency'], path: 'Coordinate with GRC to ensure LLM usage complies with standards.' },
+            'm_aimodel': { title: 'Model Security', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Protecting ML models from adversarial attacks and prompt injection.', roles: ['ML Sec Specialist'], certs: ['CAISP'], skills: ['Neural Networks', 'Python', 'Adversarial Machine Learning'], path: 'Requires knowledge of python ML pipelines and adversarial attack methodologies.' },
+            'm_aiintel': { title: 'AI Threat Intelligence', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Tracking state-sponsored attacks leveraging AI and deepfakes.', roles: ['AI Threat Researcher'], certs: ['CTIA'], skills: ['OSINT', 'Deepfake Detection', 'Threat Analysis'], path: 'Focus on AI-based phishing payloads and security logs.' },
+            'm_soc': { title: 'Security Operations Centre (SOC)', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Central hub monitoring threat feeds, triaging log alerts, and routing workflows.', roles: ['SOC Lead', 'SOC Analyst L2'], certs: ['CySA+', 'GCIA'], skills: ['SIEM (Splunk/Sentinel)', 'Log Triage', 'Alert Tuning'], path: 'Gain experience in SIEM dashboards and operational triage.' },
+            'm_blue': { title: 'Blue Team (Defensive)', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Hardening host endpoints and investigating security violations.', roles: ['Incident Responder', 'Blue Teamer'], certs: ['GCIH', 'GCFA'], skills: ['Digital Forensics', 'Malware Analysis', 'EDR Tools'], path: 'Master incident response phases and memory forensics.' },
+            'm_red': { title: 'Red Team (Offensive)', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Simulating adversary actions and bypassing defenses to expose soft targets.', roles: ['Red Team Operator'], certs: ['OSCP', 'OSEP'], skills: ['Payload Crafting', 'Active Directory Exploitation', 'Evasion Techniques'], path: 'Master scripting, binary analysis, and defensive EDR evasion.' },
+            'm_endspec': { title: 'Endpoint Security', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Deploying and tuning Endpoint Detection and Response (EDR) solutions.', roles: ['Endpoint Security Engineer'], certs: ['Security+'], skills: ['CrowdStrike/SentinelOne Admin', 'OS Hardening', 'Scripting'], path: 'Specialize in security agent configuration and OS hardening.' },
+            'm_netspec': { title: 'Network Security', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Configuring intrusion prevention systems, firewalls, and VPNs.', roles: ['Network Security Engineer'], certs: ['CCNP Security'], skills: ['Palo Alto/Cisco Firewalls', 'Packet Analysis (Wireshark)', 'BGP/OSPF'], path: 'Specialize in routing rules and microsegmentation.' },
+            'm_srvspec': { title: 'Server Security', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Hardening Windows, Linux, and container host environments.', roles: ['Linux Architect', 'Systems Admin'], certs: ['Red Hat Security'], skills: ['Linux Kernel Tuning', 'Active Directory Admin', 'PowerShell/Bash'], path: 'Master system auditing APIs and container runtimes.' },
+            'm_infraspec': { title: 'Infrastructure Security', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Securing underlying virtual, hypervisor, or on-premise compute arrays.', roles: ['Infra Security Analyst'], certs: ['CCSP'], skills: ['VMware ESXi', 'Hyper-V', 'Hardware Security Modules (HSM)'], path: 'Understand virtualization vulnerabilities and physical hardware security.' },
+            'm_devicemgt': { title: 'Device Management', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Governing hardware asset inventories and mobile device management tools.', roles: ['MDM Administrator'], certs: ['Microsoft Modern Desktop'], skills: ['Intune/Jamf Admin', 'Asset Tracking', 'Policy Enforcement'], path: 'Focus on zero-touch provisioning and remote wiping policies.' },
+            'm_firmwaresw': { title: 'Firmware & Software Security', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Securing physical firmware, BIOS, and bootloaders against hardware level access.', roles: ['Firmware Engineer'], certs: ['GICSP'], skills: ['C/C++ Assembly', 'JTAG Debugging', 'Secure Boot mechanisms'], path: 'Requires embedded programming expertise.' },
+            'm_patchmgt': { title: 'Patch Management', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Maintaining security updates across all operating systems and third-party software.', roles: ['Patching Coordinator'], certs: ['Security+'], skills: ['SCCM/WSUS', 'Ansible', 'Risk Prioritization'], path: 'Specialize in patch orchestration and roll-back validation.' },
+            'm_crypto': { title: 'Cryptography', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Implementing secure encryption algorithms and hash generation utilities.', roles: ['Cryptographer'], certs: ['CISSP'], skills: ['Mathematics', 'Algorithm Design', 'Post-Quantum Cryptography'], path: 'Gain experience in PKI and mathematical complexity analysis.' },
+            'm_iam': { title: 'Identity & Access Management', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Designing Single Sign-On (SSO) and multi-factor authentication (MFA) flows.', roles: ['IAM Specialist'], certs: ['CIAM'], skills: ['Okta/Ping Identity', 'OAuth/SAML/OIDC', 'Active Directory'], path: 'Master identity providers and directory synchronization.' },
+            'm_mobsec': { title: 'Mobile Security', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Protecting iOS/Android apps from reverse-engineering and payload injection.', roles: ['Mobile Pentester'], certs: ['eMAPT'], skills: ['Swift/Kotlin', 'Frida/Ghidra', 'Mobile Application Reverse Engineering'], path: 'Requires mobile SDK programming knowledge.' },
+            'm_appsec': { title: 'Application Security', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Preventing logical and injection security gaps across software platforms.', roles: ['AppSec Engineer'], certs: ['CSSLP'], skills: ['Web Architectures', 'OWASP Standards', 'Burp Suite'], path: 'Transition from general programming to specialized application defense.' },
+            'm_seccoderev': { title: 'Secure Code Review', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Auditing source code manually to catch logic errors or memory corruption issues.', roles: ['Code Security Specialist'], certs: ['CSSLP'], skills: ['Code Auditing', 'Multiple Programming Languages', 'Logic Flaw Detection'], path: 'Ideal for expert programmers aiming to transition into manual code audit roles.' },
+            'm_vulnmgt': { title: 'Vulnerability Management', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Running network scanning tools, prioritizing, and tracking fix deadlines.', roles: ['Vulnerability Analyst'], certs: ['CySA+'], skills: ['Nessus/Qualys', 'CVSS Scoring', 'Communication'], path: 'Focus on vulnerability scoring, threat prioritization, and patch coordination.' },
+            'm_cloudsec': { title: 'Cloud Security', category: 'mid', categoryLabel: 'Mid-Level', desc: 'Securing cloud platforms (AWS, Azure, GCP) through identity controls and configurations.', roles: ['Cloud Security Engineer'], certs: ['AWS Security Specialty', 'CCSP'], skills: ['AWS/Azure/GCP Admin', 'Terraform', 'CSPM Tools'], path: 'Focus on Infrastructure-as-Code scanning and IAM policies.' },
+            'r_code_guidelines': { title: 'Security Code Guidelines', category: 'role', categoryLabel: 'Role / Skill', desc: 'Writing and documenting secure coding practices for engineering teams.', roles: ['Security Champion'], certs: ['CSSLP'], skills: ['Technical Writing', 'Developer Advocacy', 'OWASP Standards'], path: 'Understand developer friction and create secure code libraries.' },
+            'r_threat_modeling': { title: 'Threat Modeling', category: 'role', categoryLabel: 'Role / Skill', desc: 'Analyzing system architectures to identify design flaws using STRIDE or PASTA.', roles: ['Security Architect'], certs: ['Certified Threat Modeling Professional'], skills: ['STRIDE/PASTA frameworks', 'Data Flow Diagrams', 'System Architecture'], path: 'Deconstruct architectures into data flow diagrams (DFDs).' },
+            'r_threat_assessment': { title: 'Threat Assessment', category: 'role', categoryLabel: 'Role / Skill', desc: 'Evaluating system assets against potential threat actors to design mitigation priorities.', roles: ['Threat Analyst'], certs: ['Security+'], skills: ['Threat Landscape Analysis', 'Intelligence Gathering', 'Risk Assessment'], path: 'Study actor capabilities and attack vectors.' },
+            'r_risk_assessment': { title: 'Risk Assessment', category: 'role', categoryLabel: 'Role / Skill', desc: 'Analyzing likelihood and impact of threat events to determine prioritization thresholds.', roles: ['Risk Assessor'], certs: ['CRISC'], skills: ['FAIR Framework', 'NIST Standards', 'Business Impact Analysis'], path: 'Apply quantitative/qualitative risk standards.' },
+            'r_dlp_monitoring': { title: 'DLP Monitoring', category: 'role', categoryLabel: 'Role / Skill', desc: 'Triaging active data loss alerts to prevent confidential records leakage.', roles: ['DLP Analyst'], certs: ['Security+'], skills: ['Regex Pattern Matching', 'Log Triage', 'Data Classification'], path: 'Specialize in regex data filters and logs analysis.' },
+            'r_licensing': { title: 'Licensing Compliance', category: 'role', categoryLabel: 'Role / Skill', desc: 'Tracking third-party licenses to prevent IP exposure or violations.', roles: ['Software Auditor'], certs: ['OpenChain'], skills: ['Open Source Licensing (GPL, MIT)', 'Software Composition Analysis'], path: 'Understand software supply chain tools.' },
+            'r_vendor_mgt': { title: 'Third Party Management', category: 'role', categoryLabel: 'Role / Skill', desc: 'Auditing security postures of supply chain partners and vendors using questionnaires.', roles: ['Third-Party Risk Analyst'], certs: ['CTPRP'], skills: ['SOC2 Audit Reading', 'Vendor Negotiation', 'Risk Evaluation'], path: 'Master SOC2 report analysis.' },
+            'r_sca': { title: 'Software Composition Analysis', category: 'role', categoryLabel: 'Role / Skill', desc: 'Scanning open-source library dependencies to catch known CVE vulnerabilities.', roles: ['AppSec Pipeline Analyst'], certs: ['CSSLP'], skills: ['Snyk/Black Duck', 'Dependency Management', 'CVE Triaging'], path: 'Integrate tools like Snyk into workflows.' },
+            'r_data_privacy': { title: 'Data Privacy Audits', category: 'role', categoryLabel: 'Role / Skill', desc: 'Ensuring data processing complies with GDPR, CCPA, and regional privacy rules.', roles: ['Data Privacy Consultant'], certs: ['CIPP/E'], skills: ['GDPR/CCPA Knowledge', 'Data Mapping', 'Legal Compliance'], path: 'Translate legal requirements into concrete controls.' },
+            'r_auditing': { title: 'Security Auditing', category: 'role', categoryLabel: 'Role / Skill', desc: 'Formally assessing compliance controls and validating remediation logs.', roles: ['Internal IT Auditor'], certs: ['CISA'], skills: ['Evidence Gathering', 'Control Sampling', 'Report Writing'], path: 'Hone analytical documentation review skills.' },
+            'r_regulatory': { title: 'Regulatory Compliance', category: 'role', categoryLabel: 'Role / Skill', desc: 'Meeting medical/financial cybersecurity mandates (FDA, HIPAA, PCI-DSS).', roles: ['Regulatory Affairs Specialist'], certs: ['HCISPP'], skills: ['Healthcare/Financial Regulations', 'Patient Safety Standards'], path: 'Focus on FDA pre-market submissions.' },
+            'r_mlops': { title: 'MLOps Integration', category: 'role', categoryLabel: 'Role / Skill', desc: 'Securing model deployment pipelines and continuous model telemetry.', roles: ['MLOps Security Engineer'], certs: ['AWS Machine Learning'], skills: ['Model Deployment', 'Data Lakes', 'Pipeline Security'], path: 'Learn model registry protections.' },
+            'r_threat_intel': { title: 'Threat Intelligence', category: 'role', categoryLabel: 'Role / Skill', desc: 'Collecting and converting raw threat indicators into actionable defense profiles.', roles: ['Threat Intel Analyst'], certs: ['CTIA'], skills: ['OSINT', 'MISP/YARA Rules', 'Attribution Analysis'], path: 'Focus on threat taxonomy and OSINT.' },
+            'r_threat_hunting': { title: 'Proactive Threat Hunting', category: 'role', categoryLabel: 'Role / Skill', desc: 'Searching active networks to detect quiet adversaries who evaded automated checks.', roles: ['Threat Hunter'], certs: ['GCIA'], skills: ['KQL/SPL Queries', 'Anomaly Detection', 'Deep Protocol Analysis'], path: 'Develop deep script-based analytics.' },
+            'r_cirt': { title: 'Cyber Incident Response', category: 'role', categoryLabel: 'Role / Skill', desc: 'Fast-acting operations team containing and clearing ongoing cyber intrusions.', roles: ['Incident Command Lead'], certs: ['GCIH'], skills: ['Rapid Triage', 'Network Containment', 'Crisis Management'], path: 'Requires rapid analytical triage.' },
+            'r_incident_resp': { title: 'Incident Coordination', category: 'role', categoryLabel: 'Role / Skill', desc: 'Coordinating technical, legal, and public relations actions during major breaches.', roles: ['Incident Coordinator'], certs: ['GCIH'], skills: ['Project Management', 'Public Relations', 'Legal Coordination'], path: 'Focus on containment strategies and communication.' },
+            'r_siem': { title: 'SIEM Engineering', category: 'role', categoryLabel: 'Role / Skill', desc: 'Writing correlation logic rules and log ingestion parsers in SIEM platforms.', roles: ['SIEM Engineer'], certs: ['Splunk Certified Admin'], skills: ['Splunk/Sentinel', 'Data Parsing (Regex)', 'Dashboard Creation'], path: 'Master regex and database queries.' },
+            'r_digital_forensics': { title: 'Digital Forensics', category: 'role', categoryLabel: 'Role / Skill', desc: 'Analyzing hard drive images, registry trees, and memory dumps legally.', roles: ['Digital Forensics Examiner'], certs: ['GCFA'], skills: ['Volatility/Autopsy', 'Chain of Custody', 'File System Analysis'], path: 'Master memory extraction and file parsing.' },
+            'r_malware_analysis': { title: 'Malware Analysis', category: 'role', categoryLabel: 'Role / Skill', desc: 'Analyzing malware binaries statically and dynamically to identify indicators.', roles: ['Malware Analyst'], certs: ['GREM'], skills: ['Assembly (x86/x64)', 'IDA Pro/Ghidra', 'Sandbox Execution'], path: 'Master assembly code and debugger configurations.' },
+            'r_black_box': { title: 'Black Box Pentesting', category: 'role', categoryLabel: 'Role / Skill', desc: 'Testing target applications/networks with zero prior knowledge of internal setups.', roles: ['Penetration Tester'], certs: ['OSCP'], skills: ['Reconnaissance (Nmap)', 'Metasploit', 'Vulnerability Exploitation'], path: 'Excel at reconnaissance and automated scanning.' },
+            'r_grey_box': { title: 'Grey Box Pentesting', category: 'role', categoryLabel: 'Role / Skill', desc: 'Testing systems with limited information (e.g. user credentials).', roles: ['Security Assessment Consultant'], certs: ['GPEN'], skills: ['Business Logic Testing', 'Session Hijacking', 'Privilege Escalation'], path: 'Focus on session management flaws.' },
+            'r_white_box': { title: 'White Box Assessment', category: 'role', categoryLabel: 'Role / Skill', desc: 'Assessing systems with full access to code, configuration, and developer layouts.', roles: ['Source Code Auditor'], certs: ['OSWE'], skills: ['Code Auditing', 'Architecture Review', 'Whitebox Fuzzing'], path: 'Requires deep secure code analysis capabilities.' },
+            'r_scanning': { title: 'Automated Scanning', category: 'role', categoryLabel: 'Role / Skill', desc: 'Configuring network scanner toolchains to map the enterprise surface.', roles: ['Vulnerability Scan Admin'], certs: ['Security+'], skills: ['Nessus/Qualys Configuration', 'Asset Discovery', 'False Positive Analysis'], path: 'Master scanner configuration and agent deployments.' },
+            'r_reporting': { title: 'Vulnerability Reporting', category: 'role', categoryLabel: 'Role / Skill', desc: 'Writing clear threat reports containing remediation steps for teams.', roles: ['Technical Writer'], certs: ['Security+'], skills: ['Technical Writing', 'Data Visualization', 'Executive Communication'], path: 'Translate technical ratings into business impact.' },
+            'r_patch_monitoring': { title: 'Patch Monitoring', category: 'role', categoryLabel: 'Role / Skill', desc: 'Tracking vendor patch releases, advisories, and matching them to internal assets.', roles: ['Patch Analyst'], certs: ['Security+'], skills: ['Threat Intelligence Feeds', 'Asset Mapping', 'Vendor Relations'], path: 'Track vulnerability database feeds (NVD).' },
+            'r_patch_deployment': { title: 'Patch Deployment', category: 'role', categoryLabel: 'Role / Skill', desc: 'Rolling out patches systematically using automation tools.', roles: ['Patch Specialist'], certs: ['Server+'], skills: ['SCCM/Ansible', 'Deployment Orchestration', 'Downtime Scheduling'], path: 'Automate deployments across clusters.' },
+            'r_patch_verification': { title: 'Patch Validation', category: 'role', categoryLabel: 'Role / Skill', desc: 'Testing servers post-patching to confirm resolution without causing outages.', roles: ['QA Security Tester'], certs: ['Security+'], skills: ['System Testing', 'Uptime Monitoring', 'Rollback Procedures'], path: 'Re-run vulnerability scans and functional test scripts.' },
+            'r_dast': { title: 'DAST (Dynamic Testing)', category: 'role', categoryLabel: 'Role / Skill', desc: 'Automating runtime black-box vulnerability tests against web apps.', roles: ['AppSec Engineer'], certs: ['GIAC GWE'], skills: ['Burp Suite / ZAP', 'Web Request Forgery', 'Runtime Analysis'], path: 'Integrate dynamic application scans into production.' },
+            'r_iast': { title: 'IAST (Interactive Testing)', category: 'role', categoryLabel: 'Role / Skill', desc: 'Analyzing vulnerabilities by placing interactive agents inside the app runtime.', roles: ['AppSec Specialist'], certs: ['CSSLP'], skills: ['Runtime Instrumentation', 'API Testing', 'Java/Node.js Runtimes'], path: 'Deploy runtime agents to monitor database calls.' },
+            'r_sast': { title: 'SAST (Static Testing)', category: 'role', categoryLabel: 'Role / Skill', desc: 'Configuring code scanner toolchains to scan source code repositories.', roles: ['Security Tooling Engineer'], certs: ['CSSLP'], skills: ['SonarQube/Checkmarx', 'False Positive Tuning', 'CI/CD Pipelines'], path: 'Tune scanner rule settings to minimize false positives.' },
+            'r_cryptographer': { title: 'Cryptographer Specialist', category: 'role', categoryLabel: 'Role / Skill', desc: 'Designing proprietary security algorithms and auditing crypto systems.', roles: ['Cryptographer Research Scientist'], certs: ['PhD in Mathematics/Cryptography'], skills: ['Algorithm Design', 'Advanced Mathematics', 'Quantum Cryptography'], path: 'Focus on encryption design and algorithmic validations.' },
+            'r_priv_access': { title: 'Privilege Access Management', category: 'role', categoryLabel: 'Role / Skill', desc: 'Securing elevated admin permissions using password vaults (CyberArk).', roles: ['PAM Security Specialist'], certs: ['CyberArk Certified Engineer'], skills: ['CyberArk/BeyondTrust Admin', 'Session Monitoring', 'Identity Governance'], path: 'Set up temporary access tokens and admin vaults.' },
+            'r_access_mgt': { title: 'Access Control Management', category: 'role', categoryLabel: 'Role / Skill', desc: 'Enforcing User Access Reviews and Role-Based Access Controls (RBAC).', roles: ['Access Governance Specialist'], certs: ['Security+'], skills: ['RBAC Modeling', 'Identity Provisioning', 'Audit Reporting'], path: 'Standardize account provisioning and revocation loops.' },
+            'r_pki': { title: 'Public Key Infrastructure (PKI)', category: 'role', categoryLabel: 'Role / Skill', desc: 'Managing the life cycle of digital certificates and trust stores.', roles: ['PKI Administrator'], certs: ['CISSP'], skills: ['Certificate Management', 'TLS/SSL Fundamentals', 'Hardware Security Modules'], path: 'Master root certificate authorities and sub-CAs.' },
+            'r_cert_auth': { title: 'Certificate Authority Management', category: 'role', categoryLabel: 'Role / Skill', desc: 'Setting and maintaining validation rules for digital signatures.', roles: ['CA Administrator'], certs: ['Security+'], skills: ['Certificate Revocation Lists', 'Trust Models', 'System Administration'], path: 'Focus on secure certificate signing policies.' },
+            'p_iam': {
+                title: 'Identity, Access & Cryptography',
+                category: 'primary',
+                categoryLabel: 'Primary Domain',
+                desc: 'Developing protocols for role authorization, encryption management, keys, and directory structures.',
+                roles: ['IAM Engineer', 'Cryptographic Analyst'],
+                certs: ['CIAM', 'CompTIA Security+'],
+                skills: ['Active Directory / LDAP', 'OAuth / SAML', 'Public Key Infrastructure (PKI)', 'Encryption'],
+                path: 'Requires deep understanding of LDAP, OAuth, SAML, PKI, and key distribution structures.'
+            },
+        };
+
+        // =============================================
+        // VIS.JS NETWORK CONFIGURATION
+        // =============================================
+        const colors = {
+            core: { background: '#1e3a8a', border: '#3b82f6', highlight: { background: '#2563eb', border: '#60a5fa' }, hover: { background: '#2563eb', border: '#60a5fa' } },
+            primary: { background: '#064e3b', border: '#10b981', highlight: { background: '#059669', border: '#34d399' }, hover: { background: '#059669', border: '#34d399' } },
+            mid: { background: '#78350f', border: '#f59e0b', highlight: { background: '#d97706', border: '#fbbf24' }, hover: { background: '#d97706', border: '#fbbf24' } },
+            role: { background: '#4c0519', border: '#f43f5e', highlight: { background: '#e11d48', border: '#fb7185' }, hover: { background: '#e11d48', border: '#fb7185' } }
+        };
+
+        const fontWhite = { color: '#ffffff' };
+
+        const nodesArray = [
+            { id: 'core', label: 'Careers in\nCyber Security', shape: 'box', color: colors.core, font: { ...fontWhite, bold: true, size: 16 }, borderWidth: 3 },
+            { id: 'p_train', label: 'Training &\nEducation', shape: 'box', color: colors.primary, font: { ...fontWhite, size: 13 } },
+            { id: 'p_design', label: 'Security By\nDesign', shape: 'box', color: colors.primary, font: { ...fontWhite, size: 13 } },
+            { id: 'p_grc', label: 'Governance, Risk\nand Compliance', shape: 'box', color: colors.primary, font: { ...fontWhite, size: 13 } },
+            { id: 'p_ai', label: 'AI / ML Security', shape: 'box', color: colors.primary, font: { ...fontWhite, size: 13 } },
+            { id: 'p_ops', label: 'Security\nOperations', shape: 'box', color: colors.primary, font: { ...fontWhite, size: 13 } },
+            { id: 'p_off_def', label: 'Offensive and\nDefensive Security', shape: 'box', color: colors.primary, font: { ...fontWhite, size: 13 } },
+            { id: 'p_infra', label: 'Infrastructure and\nEndpoint Security', shape: 'box', color: colors.primary, font: { ...fontWhite, size: 13 } },
+            { id: 'p_iot', label: 'IoT and OT\nSecurity', shape: 'box', color: colors.primary, font: { ...fontWhite, size: 13 } },
+            { id: 'p_vuln', label: 'Vulnerability\nManagement &\nApp Security', shape: 'box', color: colors.primary, font: { ...fontWhite, size: 13 } },
+            { id: 'p_iam', label: 'Identity, Access &\nCryptography', shape: 'box', color: colors.primary, font: { ...fontWhite, size: 13 } },
+            { id: 'm_sme', label: 'SME / Security\nTraining', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_arch', label: 'Secure\nArchitecture', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_devsec', label: 'DevSecOps', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_rm', label: 'Risk Management', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_dlp', label: 'Data Loss\nPrevention', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_reg', label: 'Regulatory &\nCompliance', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_aigov', label: 'AI Governance', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_aimodel', label: 'Model Security', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_aiintel', label: 'AI Threat\nIntelligence', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_soc', label: 'Security Operations\nCentre (SOC)', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_blue', label: 'Blue Team\n(Defensive)', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_red', label: 'Red Team\n(Offensive)', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_endspec', label: 'Endpoint Security', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_netspec', label: 'Network Security', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_srvspec', label: 'Server Security', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_infraspec', label: 'Infra Security', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_devicemgt', label: 'Device Management', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_firmwaresw', label: 'Firmware &\nSoftware Security', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_patchmgt', label: 'Patch Management', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_crypto', label: 'Cryptography', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_iam', label: 'Identity & Access\nManagement', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_mobsec', label: 'Mobile Security', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_appsec', label: 'App Security', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_seccoderev', label: 'Secure Code Review', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_vulnmgt', label: 'Vulnerability\nManagement', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'm_cloudsec', label: 'Cloud Security', shape: 'box', color: colors.mid, font: fontWhite },
+            { id: 'r_code_guidelines', label: 'Security Code\nGuidelines', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_threat_modeling', label: 'Threat Modeling', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_threat_assessment', label: 'Threat Assessment', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_risk_assessment', label: 'Risk Assessment', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_dlp_monitoring', label: 'DLP Monitoring', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_licensing', label: 'Licensing\nCompliance', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_vendor_mgt', label: 'Third Party/Vendor\nManagement', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_sca', label: 'Software Composition\nAnalysis (SCA)', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_data_privacy', label: 'Data Privacy', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_auditing', label: 'Security Auditing', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_regulatory', label: 'Regulatory\n(FDA/HIPAA)', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_mlops', label: 'MLOps', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_threat_intel', label: 'Threat\nIntelligence', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_threat_hunting', label: 'Threat Hunting', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_cirt', label: 'CIRT', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_incident_resp', label: 'Incident\nResponse', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_siem', label: 'SIEM\nEngineering', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_digital_forensics', label: 'Digital Forensics', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_malware_analysis', label: 'Malware Analysis', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_black_box', label: 'Black Box', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_grey_box', label: 'Grey Box', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_white_box', label: 'White Box', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_scanning', label: 'Scanning', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_reporting', label: 'Reporting', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_patch_monitoring', label: 'Patch Monitoring', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_patch_deployment', label: 'Patch Deployment', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_patch_verification', label: 'Patch Verification\n& Validation', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_dast', label: 'DAST', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_iast', label: 'IAST', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_sast', label: 'SAST', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_cryptographer', label: 'Cryptographer', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_priv_access', label: 'Privilege Access\nManagement', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_access_mgt', label: 'Access\nManagement', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_pki', label: 'Public Key\nInfrastructure', shape: 'ellipse', color: colors.role, font: fontWhite },
+            { id: 'r_cert_auth', label: 'Certificate\nAuthority', shape: 'ellipse', color: colors.role, font: fontWhite }
+        ];
+
+        const edgesArray = [
+            { from: 'core', to: 'p_train' }, { from: 'core', to: 'p_design' }, { from: 'core', to: 'p_grc' },
+            { from: 'core', to: 'p_ai' }, { from: 'core', to: 'p_ops' }, { from: 'core', to: 'p_off_def' },
+            { from: 'core', to: 'p_infra' }, { from: 'core', to: 'p_iot' }, { from: 'core', to: 'p_vuln' },
+            { from: 'core', to: 'p_iam' },
+            { from: 'p_train', to: 'm_sme' }, { from: 'p_design', to: 'm_sme' },
+            { from: 'p_design', to: 'm_arch' }, { from: 'p_design', to: 'm_devsec' },
+            { from: 'p_grc', to: 'm_devsec' }, { from: 'p_grc', to: 'm_rm' },
+            { from: 'p_grc', to: 'm_dlp' }, { from: 'p_grc', to: 'm_reg' },
+            { from: 'm_sme', to: 'r_code_guidelines' },
+            { from: 'm_arch', to: 'r_code_guidelines' }, { from: 'm_arch', to: 'r_threat_modeling' },
+            { from: 'm_devsec', to: 'r_threat_modeling' }, { from: 'm_devsec', to: 'r_threat_assessment' },
+            { from: 'm_rm', to: 'r_risk_assessment' },
+            { from: 'm_dlp', to: 'r_dlp_monitoring' },
+            { from: 'm_reg', to: 'r_licensing' }, { from: 'm_reg', to: 'r_vendor_mgt' },
+            { from: 'm_reg', to: 'r_sca' }, { from: 'm_reg', to: 'r_data_privacy' },
+            { from: 'm_reg', to: 'r_auditing' }, { from: 'm_reg', to: 'r_regulatory' },
+            { from: 'm_reg', to: 'm_aigov' },
+            { from: 'p_ai', to: 'm_aigov' }, { from: 'p_ai', to: 'm_aimodel' }, { from: 'p_ai', to: 'm_aiintel' },
+            { from: 'm_aimodel', to: 'r_mlops' },
+            { from: 'm_aiintel', to: 'r_threat_intel' }, { from: 'm_aiintel', to: 'r_threat_hunting' },
+            { from: 'p_ops', to: 'm_soc' },
+            { from: 'm_soc', to: 'r_threat_intel' }, { from: 'm_soc', to: 'r_threat_hunting' },
+            { from: 'm_soc', to: 'r_cirt' }, { from: 'm_soc', to: 'r_incident_resp' },
+            { from: 'm_soc', to: 'r_siem' }, { from: 'm_soc', to: 'r_digital_forensics' },
+            { from: 'p_off_def', to: 'm_blue' }, { from: 'p_off_def', to: 'm_red' },
+            { from: 'm_blue', to: 'r_malware_analysis' }, { from: 'm_blue', to: 'r_digital_forensics' },
+            { from: 'm_blue', to: 'r_black_box' }, { from: 'm_blue', to: 'r_grey_box' }, { from: 'm_blue', to: 'r_white_box' },
+            { from: 'm_red', to: 'r_black_box' }, { from: 'm_red', to: 'r_grey_box' }, { from: 'm_red', to: 'r_white_box' },
+            { from: 'p_infra', to: 'm_endspec' }, { from: 'p_infra', to: 'm_netspec' },
+            { from: 'p_infra', to: 'm_srvspec' }, { from: 'p_infra', to: 'm_infraspec' },
+            { from: 'm_endspec', to: 'm_patchmgt' }, { from: 'm_netspec', to: 'm_patchmgt' },
+            { from: 'm_srvspec', to: 'm_patchmgt' }, { from: 'm_infraspec', to: 'm_patchmgt' },
+            { from: 'p_iot', to: 'm_devicemgt' },
+            { from: 'm_devicemgt', to: 'r_scanning' }, { from: 'm_devicemgt', to: 'r_reporting' },
+            { from: 'm_devicemgt', to: 'm_patchmgt' },
+            { from: 'm_firmwaresw', to: 'r_scanning' }, { from: 'm_firmwaresw', to: 'r_reporting' },
+            { from: 'm_firmwaresw', to: 'm_patchmgt' },
+            { from: 'm_patchmgt', to: 'r_patch_monitoring' },
+            { from: 'm_patchmgt', to: 'r_patch_deployment' },
+            { from: 'm_patchmgt', to: 'r_patch_verification' },
+            { from: 'p_vuln', to: 'm_mobsec' }, { from: 'p_vuln', to: 'm_appsec' },
+            { from: 'p_vuln', to: 'm_seccoderev' }, { from: 'p_vuln', to: 'm_vulnmgt' },
+            { from: 'p_vuln', to: 'm_cloudsec' }, { from: 'p_vuln', to: 'm_firmwaresw' },
+            { from: 'm_appsec', to: 'r_dast' }, { from: 'm_appsec', to: 'r_iast' }, { from: 'm_appsec', to: 'r_sast' },
+            { from: 'm_seccoderev', to: 'r_sast' },
+            { from: 'm_vulnmgt', to: 'r_scanning' }, { from: 'm_vulnmgt', to: 'r_reporting' },
+            { from: 'm_cloudsec', to: 'r_scanning' }, { from: 'm_cloudsec', to: 'r_reporting' },
+            { from: 'p_iam', to: 'm_crypto' }, { from: 'p_iam', to: 'm_iam' },
+            { from: 'm_crypto', to: 'r_cryptographer' },
+            { from: 'm_iam', to: 'r_priv_access' }, { from: 'm_iam', to: 'r_access_mgt' },
+            { from: 'm_iam', to: 'r_pki' }, { from: 'm_iam', to: 'r_cert_auth' }
+        ];
+
+        // =============================================
+        // INIT NETWORK
+        // =============================================
+        // Enforce structural order by category and adjust sizes
+        nodesArray.forEach(node => {
+            const cat = nodeDetails[node.id]?.category;
+            if (cat === 'core') {
+                node.level = 0;
+                node.font = { color: '#ffffff', size: 22, face: 'Inter, sans-serif', bold: true };
+                node.margin = { top: 20, bottom: 20, left: 26, right: 26 };
+            }
+            else if (cat === 'primary') {
+                node.level = 1;
+                node.font = { color: '#ffffff', size: 18, face: 'Inter, sans-serif', bold: true };
+                node.margin = { top: 16, bottom: 16, left: 22, right: 22 };
+            }
+            else if (cat === 'mid') {
+                node.level = 2;
+                node.font = { color: '#ffffff', size: 16, face: 'Inter, sans-serif', bold: true };
+                node.margin = { top: 14, bottom: 14, left: 18, right: 18 };
+            }
+            else if (cat === 'role') {
+                node.level = 3;
+                node.shape = 'box'; // Boxes feel more like substantial tiles than ellipses
+                node.font = { color: '#ffffff', size: 16, face: 'Inter, sans-serif', bold: true };
+                node.margin = { top: 14, bottom: 14, left: 18, right: 18 };
+            } else {
+                console.warn('Missing data mapping for node:', node.id);
+                node.level = 4; // Fallback level to prevent layout engine crashes
+            }
+        });
+
+        const container = document.getElementById('mynetwork');
+        const nodesDataSet = new vis.DataSet(nodesArray);
+        const edgesDataSet = new vis.DataSet(edgesArray);
+        const data = { nodes: nodesDataSet, edges: edgesDataSet };
+
+        const options = {
+            nodes: {
+                borderWidth: 2,
+                borderWidthSelected: 3,
+                margin: 16,
+                font: { color: '#ffffff', size: 14, face: 'Inter, sans-serif' },
+                shadow: { enabled: true, color: 'rgba(0,0,0,0.4)', size: 8, x: 0, y: 4 },
+                chosen: {
+                    node: function(values) {
+                        values.borderWidth = 3;
+                        values.shadow = true;
+                        values.shadowSize = 15;
+                        values.shadowColor = 'rgba(59, 130, 246, 0.3)';
+                    }
+                }
+            },
+            edges: {
+                arrows: { to: { enabled: true, scaleFactor: 0.6, type: 'arrow' } },
+                color: { color: 'rgba(255, 255, 255, 0.35)', highlight: '#60a5fa', hover: 'rgba(96, 165, 250, 0.6)' },
+                width: 1.5,
+                hoverWidth: 0.5,
+                smooth: { type: 'cubicBezier', forceDirection: 'horizontal', roundness: 0.4 } // Solid, horizontal flowing lines
+            },
+            interaction: {
+                hover: true,
+                selectConnectedEdges: true,
+                tooltipDelay: 200,
+                zoomView: true,
+                dragView: true,
+                dragNodes: false // Prevent messy dragging
+            },
+            layout: {
+                hierarchical: {
+                    enabled: true,
+                    direction: 'LR',
+                    sortMethod: 'directed',
+                    levelSeparation: 450,
+                    nodeSpacing: 140,
+                    treeSpacing: 250
+                }
+            },
+            physics: {
+                enabled: true,
+                hierarchicalRepulsion: {
+                    centralGravity: 0.0,
+                    springLength: 100,
+                    springConstant: 0.01,
+                    nodeDistance: 120,
+                    damping: 1.0 // Prevents bouncy dynamic feel
+                },
+                solver: 'hierarchicalRepulsion',
+                stabilization: { iterations: 50, updateInterval: 10 }
+            }
+        };
+
+        const network = new vis.Network(container, data, options);
+        let physicsEnabled = true;
+
+        // =============================================
+        // LOADING ANIMATION
+        // =============================================
+        const loaderFill = document.getElementById('loaderFill');
+        let loadProgress = 0;
+
+        network.on("stabilizationProgress", function(params) {
+            loadProgress = Math.round((params.iterations / params.total) * 100);
+            loaderFill.style.width = loadProgress + '%';
+        });
+
+        network.on("stabilizationIterationsDone", function () {
+            loaderFill.style.width = '100%';
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+                // Reveal UI elements with stagger
+                setTimeout(() => {
+                    document.getElementById('hudHeader').style.opacity = '1';
+                    document.getElementById('hudHeader').style.transition = 'opacity 0.6s ease';
+                }, 100);
+                setTimeout(() => {
+                    document.getElementById('hudControls').style.opacity = '1';
+                    document.getElementById('hudControls').style.transition = 'opacity 0.6s ease';
+                }, 300);
+                setTimeout(() => {
+                    document.getElementById('shortcutBadge').style.opacity = '0.6';
+                    document.getElementById('shortcutBadge').style.transition = 'opacity 0.6s ease';
+                }, 400);
+
+                freezePhysics();
+            }, 400);
+        });
+
+        // =============================================
+        // PHYSICS CONTROLS
+        // =============================================
+        function togglePhysics() {
+            physicsEnabled = !physicsEnabled;
+            network.setOptions({ physics: { enabled: physicsEnabled } });
+            const btn = document.getElementById('physicsToggleBtn');
+            if (physicsEnabled) {
+                btn.innerHTML = '<i class="fa-solid fa-lock-open"></i>';
+                btn.setAttribute('data-tooltip', 'Layout Unlocked');
+                btn.classList.remove('active');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-lock"></i>';
+                btn.setAttribute('data-tooltip', 'Layout Locked');
+                btn.classList.add('active');
+            }
+        }
+
+        function freezePhysics() {
+            physicsEnabled = false;
+            network.setOptions({ physics: { enabled: false } });
+            const btn = document.getElementById('physicsToggleBtn');
+            btn.innerHTML = '<i class="fa-solid fa-lock"></i>';
+            btn.setAttribute('data-tooltip', 'Layout Locked');
+            btn.classList.add('active');
+        }
+
+        function zoomIn() { network.moveTo({ scale: network.getScale() * 1.3, animation: { duration: 300, easingFunction: 'easeInOutQuad' } }); }
+        function zoomOut() { network.moveTo({ scale: network.getScale() * 0.7, animation: { duration: 300, easingFunction: 'easeInOutQuad' } }); }
+        function resetView() { network.fit({ animation: { duration: 800, easingFunction: 'easeInOutQuad' } }); }
+
+        // =============================================
+        // SIDEBAR
+        // =============================================
+        function openSidebar(nodeId) {
+            const details = nodeDetails[nodeId];
+            if (!details) return;
+
+            document.getElementById('sidebarPlaceholder').parentElement.style.display = 'none';
+            const content = document.getElementById('sidebarContent');
+            content.style.display = 'flex';
+            content.style.flexDirection = 'column';
+            content.style.height = '100%';
+
+            const catTag = document.getElementById('nodeCategoryTag');
+            const catIcons = { core: 'fa-bullseye', primary: 'fa-layer-group', mid: 'fa-cubes', role: 'fa-user-gear' };
+            catTag.innerHTML = `<i class="fa-solid ${catIcons[details.category] || 'fa-circle'}"></i> ${details.categoryLabel}`;
+            catTag.className = `node-category ${details.category}`;
+
+            document.getElementById('nodeTitle').innerText = details.title;
+            document.getElementById('nodeDesc').innerText = details.desc;
+
+            // Roles
+            const rolesContainer = document.getElementById('nodeRoles');
+            rolesContainer.innerHTML = '';
+            (details.roles || ['General Practitioner']).forEach(role => {
+                const pill = document.createElement('span');
+                pill.className = 'tag-pill';
+                pill.innerHTML = `<i class="fa-solid fa-briefcase"></i> ${role}`;
+                rolesContainer.appendChild(pill);
+            });
+
+            // Skills
+            const skillsContainer = document.getElementById('nodeSkills');
+            skillsContainer.innerHTML = '';
+            (details.skills || ['Core IT Fundamentals']).forEach(skill => {
+                const pill = document.createElement('span');
+                pill.className = 'tag-pill';
+                pill.innerHTML = `<i class="fa-solid fa-check"></i> ${skill}`;
+                skillsContainer.appendChild(pill);
+            });
+
+            // Certs
+            const certsContainer = document.getElementById('nodeCerts');
+            certsContainer.innerHTML = '';
+            (details.certs || ['Foundational Training']).forEach(cert => {
+                const pill = document.createElement('span');
+                pill.className = 'tag-pill accent';
+                pill.innerHTML = `<i class="fa-solid fa-award"></i> ${cert}`;
+                certsContainer.appendChild(pill);
+            });
+
+            document.getElementById('nodePath').innerText = details.path;
+
+            // Connected nodes
+            const connectedSection = document.getElementById('connectedSection');
+            const connectedList = document.getElementById('connectedList');
+            const connectedIds = network.getConnectedNodes(nodeId);
+            if (connectedIds.length > 0) {
+                connectedSection.style.display = 'block';
+                connectedList.innerHTML = '';
+                connectedIds.forEach(cid => {
+                    const cDetail = nodeDetails[cid];
+                    if (!cDetail) return;
+                    const catColors = { core: '#3b82f6', primary: '#10b981', mid: '#f59e0b', role: '#f43f5e' };
+                    const item = document.createElement('div');
+                    item.className = 'connected-item';
+                    item.innerHTML = `<span class="ci-dot" style="background:${catColors[cDetail.category]}"></span> ${cDetail.title} <i class="fa-solid fa-chevron-right ci-arrow"></i>`;
+                    item.onclick = function() {
+                        network.selectNodes([cid]);
+                        network.focus(cid, { scale: 1.1, animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+                        openSidebar(cid);
+                        highlightConnections(cid);
+                        updateBreadcrumb(cid);
+                    };
+                    connectedList.appendChild(item);
+                });
+            } else {
+                connectedSection.style.display = 'none';
+            }
+
+            document.getElementById('detailSidebar').classList.add('open');
+        }
+
+        function closeSidebar() {
+            document.getElementById('detailSidebar').classList.remove('open');
+            network.unselectAll();
+            restoreAllNodes();
+            document.getElementById('breadcrumb').classList.remove('visible');
+        }
+
+        // =============================================
+        // HIGHLIGHT CONNECTIONS
+        // =============================================
+        function highlightConnections(nodeId) {
+            const connectedNodes = network.getConnectedNodes(nodeId);
+            const connectedEdges = network.getConnectedEdges(nodeId);
+            const allNodeIds = nodesDataSet.getIds();
+            const allEdgeIds = edgesDataSet.getIds();
+
+            // Dim all
+            const nodeUpdates = [];
+            allNodeIds.forEach(id => {
+                if (id === nodeId || connectedNodes.includes(id)) {
+                    const detail = nodeDetails[id];
+                    const cat = detail ? detail.category : 'core';
+                    nodeUpdates.push({ id, opacity: 1.0, color: colors[cat] });
+                } else {
+                    nodeUpdates.push({ id, opacity: 0.12 });
+                }
+            });
+            nodesDataSet.update(nodeUpdates);
+
+            const edgeUpdates = [];
+            allEdgeIds.forEach(id => {
+                if (connectedEdges.includes(id)) {
+                    edgeUpdates.push({ id, color: { color: 'rgba(96, 165, 250, 0.9)' }, width: 3 });
+                } else {
+                    edgeUpdates.push({ id, color: { color: 'rgba(255, 255, 255, 0.08)' }, width: 1 });
+                }
+            });
+            edgesDataSet.update(edgeUpdates);
+        }
+
+        function restoreAllNodes() {
+            const nodeUpdates = [];
+            nodesDataSet.forEach(node => {
+                const detail = nodeDetails[node.id];
+                const cat = detail ? detail.category : 'core';
+                nodeUpdates.push({ id: node.id, color: colors[cat], opacity: 1.0 });
+            });
+            nodesDataSet.update(nodeUpdates);
+
+            const edgeUpdates = [];
+            edgesDataSet.forEach(edge => {
+                edgeUpdates.push({ id: edge.id, color: { color: 'rgba(255, 255, 255, 0.35)' }, width: 1.5 });
+            });
+            edgesDataSet.update(edgeUpdates);
+        }
+
+        // =============================================
+        // BREADCRUMB
+        // =============================================
+        function updateBreadcrumb(nodeId) {
+            const bc = document.getElementById('breadcrumb');
+            const path = findPathToCore(nodeId);
+            if (path.length <= 1) { bc.classList.remove('visible'); return; }
+
+            bc.innerHTML = path.map((id, i) => {
+                const detail = nodeDetails[id];
+                const isLast = i === path.length - 1;
+                const sep = i < path.length - 1 ? '<i class="fa-solid fa-chevron-right bc-sep"></i>' : '';
+                return `<span class="bc-item ${isLast ? 'active' : ''}">${detail ? detail.title : id}</span>${sep}`;
+            }).join('');
+            bc.classList.add('visible');
+        }
+
+        function findPathToCore(nodeId) {
+            // BFS from core to nodeId
+            if (nodeId === 'core') return ['core'];
+            const visited = new Set();
+            const queue = [['core']];
+            visited.add('core');
+            while (queue.length > 0) {
+                const path = queue.shift();
+                const current = path[path.length - 1];
+                const neighbors = network.getConnectedNodes(current);
+                for (const neighbor of neighbors) {
+                    if (visited.has(neighbor)) continue;
+                    visited.add(neighbor);
+                    const newPath = [...path, neighbor];
+                    if (neighbor === nodeId) return newPath;
+                    queue.push(newPath);
+                }
+            }
+            return [nodeId];
+        }
+
+        // =============================================
+        // NETWORK EVENTS
+        // =============================================
+        network.on("selectNode", function (params) {
+            if (params.nodes.length > 0) {
+                const id = params.nodes[0];
+                openSidebar(id);
+                highlightConnections(id);
+                updateBreadcrumb(id);
+                network.focus(id, { scale: 1.1, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+            }
+        });
+
+        // Only close sidebar if clicking on the empty background (not another node)
+        network.on("click", function (params) {
+            if (params.nodes.length === 0) {
+                closeSidebar();
+            }
+        });
+
+        // =============================================
+        // SEARCH
+        // =============================================
+        const searchInput = document.getElementById('nodeSearch');
+        const searchClearBtn = document.getElementById('searchClear');
+
+        searchInput.addEventListener('input', function (e) {
+            const query = e.target.value.toLowerCase().trim();
+            searchClearBtn.classList.toggle('visible', query.length > 0);
+
+            if (query === '') {
+                restoreAllNodes();
+                return;
+            }
+
+            const updates = [];
+            nodesDataSet.forEach(node => {
+                const detail = nodeDetails[node.id];
+                const matchesTitle = detail?.title.toLowerCase().includes(query);
+                const matchesDesc = detail?.desc.toLowerCase().includes(query);
+                const matchesRoles = detail?.roles?.some(r => r.toLowerCase().includes(query));
+                const matchesCerts = detail?.certs?.some(c => c.toLowerCase().includes(query));
+
+                if (matchesTitle || matchesDesc || matchesRoles || matchesCerts) {
+                    const cat = detail?.category || 'core';
+                    updates.push({ id: node.id, opacity: 1.0, color: { background: colors[cat].highlight.background, border: '#ffffff' } });
+                } else {
+                    updates.push({ id: node.id, opacity: 0.1 });
+                }
+            });
+            nodesDataSet.update(updates);
+        });
+
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                const query = e.target.value.toLowerCase().trim();
+                if (query === '') return;
+                let firstMatchId = null;
+                nodesDataSet.forEach(node => {
+                    if (firstMatchId) return;
+                    const detail = nodeDetails[node.id];
+                    if (detail?.title.toLowerCase().includes(query) || detail?.roles?.some(r => r.toLowerCase().includes(query))) {
+                        firstMatchId = node.id;
+                    }
+                });
+                if (firstMatchId) {
+                    network.selectNodes([firstMatchId]);
+                    openSidebar(firstMatchId);
+                    highlightConnections(firstMatchId);
+                    updateBreadcrumb(firstMatchId);
+                    network.focus(firstMatchId, { scale: 1.2, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+                }
+            }
+            if (e.key === 'Escape') {
+                clearSearch();
+                searchInput.blur();
+            }
+        });
+
+        function clearSearch() {
+            searchInput.value = '';
+            searchClearBtn.classList.remove('visible');
+            restoreAllNodes();
+        }
+
+        // =============================================
+        // CATEGORY FILTERS
+        // =============================================
+        function filterCategory(category) {
+            document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
+            const activePill = document.getElementById(`f-${category}`);
+            if (activePill) activePill.classList.add('active');
+
+            if (category === 'all') {
+                restoreAllNodes();
+                return;
+            }
+
+            const updates = [];
+            nodesDataSet.forEach(node => {
+                const detail = nodeDetails[node.id];
+                if (detail && detail.category === category) {
+                    updates.push({ id: node.id, color: colors[category], opacity: 1.0 });
+                } else {
+                    updates.push({ id: node.id, opacity: 0.1 });
+                }
+            });
+            nodesDataSet.update(updates);
+        }
+
+        // =============================================
+        // KEYBOARD SHORTCUTS
+        // =============================================
+        document.addEventListener('keydown', function(e) {
+            // '/' to focus search
+            if (e.key === '/' && document.activeElement !== searchInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            // 'f' to fit view
+            if (e.key === 'f' && document.activeElement !== searchInput) {
+                e.preventDefault();
+                resetView();
+            }
+            // Escape to close sidebar
+            if (e.key === 'Escape') {
+                if (document.getElementById('detailSidebar').classList.contains('open')) {
+                    closeSidebar();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
