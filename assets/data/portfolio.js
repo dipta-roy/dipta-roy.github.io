@@ -57,13 +57,6 @@ const portfolioData = {
       "url": "https://github.com/dipta-roy/MicrosoftBaselineScan"
     },
     {
-      "title": "ThreatPilot",
-      "description": "ThreatPilot is an advanced, AI-driven threat modeling application designed specifically for cyber security architects and engineers",
-      "categories": "ai security-tools",
-      "language": "Python",
-      "url": "https://dipta-roy.github.io/ThreatPilot/"
-    },
-    {
       "title": "AdvLens",
       "description": "AdvLens: Interactive Adversarial Machine Learning Lab",
       "categories": "ai",
@@ -94,22 +87,12 @@ const portfolioData = {
     },
     {
       "title": "TwinScope",
-      "version": "v1.1",
+      "version": "v1.2",
       "description": "A cross-platform file and folder comparison tool",
-      "checksum": "ab4e6ad7d1d69cf61f7281129ee847d128d254ee587a7cc4ae282880e28b4e28",
+      "checksum": "469a60280f2bad7d9c5a87a2018a6a4b91e9c75ee78d4447bd5817f1e91dab7a",
       "fileType": "MSI Executable",
-      "vtLink": "https://www.virustotal.com/gui/file/ab4e6ad7d1d69cf61f7281129ee847d128d254ee587a7cc4ae282880e28b4e28",
-      "downloadUrl": "https://github.com/dipta-roy/TwinScope/releases/download/v1.1/TwinScope_Setup_1.1.0.msi",
-      "icon": "fas fa-download"
-    },
-    {
-      "title": "ThreatPilot",
-      "version": "v3.2.0",
-      "description": "ThreatPilot is an advanced, AI-driven threat modeling application designed specifically for cyber security architects and engineers.",
-      "checksum": "7007a68a9a9a84f4a936fdf8160c04fc611eb58eed68be06815e05f201b2acc5",
-      "fileType": "MSI Executable",
-      "vtLink": "https://www.virustotal.com/gui/file/7007a68a9a9a84f4a936fdf8160c04fc611eb58eed68be06815e05f201b2acc5",
-      "downloadUrl": "https://github.com/dipta-roy/ThreatPilot/releases/download/Release-3.2.0/ThreatPilot-3.2.0-win64.msi",
+      "vtLink": "https://www.virustotal.com/gui/file/469a60280f2bad7d9c5a87a2018a6a4b91e9c75ee78d4447bd5817f1e91dab7a",
+      "downloadUrl": "https://github.com/dipta-roy/TwinScope/releases/download/v1.2/TwinScope_Setup_1.2.0.msi",
       "icon": "fas fa-download"
     },
     {
