@@ -67,32 +67,32 @@ const portfolioData = {
   "software_downloads": [
     {
       "title": "Secure Vault",
-      "version": "v1.4",
+      "version": "v1.5",
       "description": "Portable version of Secure Vault password manager.",
-      "checksum": "43e42484e0f560b9301ac74ba99b998babba64f66bf09f096406818279ea07ed",
-      "fileType": "ZIP Archive",
-      "vtLink": "https://www.virustotal.com/gui/file/43e42484e0f560b9301ac74ba99b998babba64f66bf09f096406818279ea07ed",
-      "downloadUrl": "https://github.com/dipta-roy/SecureVault/releases/download/v1.4/SecureVault.1.4.Portable.zip",
+      "checksum": "635cd80ed3f5c5e83f8b57b48aba29ea07f21564c77834fc6ae6bd76536a583f",
+      "fileType": "EXE Executable",
+      "vtLink": "https://www.virustotal.com/gui/file/635cd80ed3f5c5e83f8b57b48aba29ea07f21564c77834fc6ae6bd76536a583f",
+      "downloadUrl": "https://github.com/dipta-roy/SecureVault/releases/download/v1.5/SecureVault.1.5.portable.exe",
       "icon": "fas fa-download"
     },
     {
       "title": "PlanIFlow",
-      "version": "v2.4.0",
+      "version": "v2.8.0",
       "description": "An offline project management tool.",
-      "checksum": "2b437fd3b2d6b627d79542de9487cdcf42e5f0e48ada15694e9c256f5bc6882a",
+      "checksum": "4523437e77f79bffa86351ff13b70c3666593142f073eeab7950f38b8597d7ec",
       "fileType": "MSI Executable",
-      "vtLink": "https://www.virustotal.com/gui/file/2b437fd3b2d6b627d79542de9487cdcf42e5f0e48ada15694e9c256f5bc6882a",
-      "downloadUrl": "https://github.com/dipta-roy/PlanIFlow/releases/download/v2.7/PlanIFlow_Setup_2.7.0.msi",
+      "vtLink": "https://www.virustotal.com/gui/file/4523437e77f79bffa86351ff13b70c3666593142f073eeab7950f38b8597d7ec",
+      "downloadUrl": "https://github.com/dipta-roy/PlanIFlow/releases/download/v2.8.0/PlanIFlow_Setup_2.8.0.msi",
       "icon": "fas fa-download"
     },
     {
       "title": "TwinScope",
-      "version": "v1.2",
+      "version": "v1.2.1",
       "description": "A cross-platform file and folder comparison tool",
-      "checksum": "469a60280f2bad7d9c5a87a2018a6a4b91e9c75ee78d4447bd5817f1e91dab7a",
+      "checksum": "067d71a5a887fa6f0f242746d1ee6a4377c5cc9b88292d3722232c361713b620",
       "fileType": "MSI Executable",
-      "vtLink": "https://www.virustotal.com/gui/file/469a60280f2bad7d9c5a87a2018a6a4b91e9c75ee78d4447bd5817f1e91dab7a",
-      "downloadUrl": "https://github.com/dipta-roy/TwinScope/releases/download/v1.2/TwinScope_Setup_1.2.0.msi",
+      "vtLink": "https://www.virustotal.com/gui/file/067d71a5a887fa6f0f242746d1ee6a4377c5cc9b88292d3722232c361713b620",
+      "downloadUrl": "https://github.com/dipta-roy/TwinScope/releases/download/v1.2.1/TwinScope_Setup_1.2.1.msi",
       "icon": "fas fa-download"
     },
     {
