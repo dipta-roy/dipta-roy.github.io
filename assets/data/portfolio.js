@@ -77,22 +77,22 @@ const portfolioData = {
     },
     {
       "title": "PlanIFlow",
-      "version": "v2.8.0",
+      "version": "v2.9.0",
       "description": "An offline project management tool.",
-      "checksum": "4523437e77f79bffa86351ff13b70c3666593142f073eeab7950f38b8597d7ec",
+      "checksum": "411a3d9359ca60be8e7f8f86024662377a79d64402d8a893e22cf1d9308b8465",
       "fileType": "MSI Executable",
-      "vtLink": "https://www.virustotal.com/gui/file/4523437e77f79bffa86351ff13b70c3666593142f073eeab7950f38b8597d7ec",
-      "downloadUrl": "https://github.com/dipta-roy/PlanIFlow/releases/download/v2.8.0/PlanIFlow_Setup_2.8.0.msi",
+      "vtLink": "https://www.virustotal.com/gui/file/411a3d9359ca60be8e7f8f86024662377a79d64402d8a893e22cf1d9308b8465",
+      "downloadUrl": "https://github.com/dipta-roy/PlanIFlow/releases/download/v2.9.0/PlanIFlow_Setup_2.9.0.msi",
       "icon": "fas fa-download"
     },
     {
       "title": "TwinScope",
-      "version": "v1.2.1",
+      "version": "v1.2.2",
       "description": "A cross-platform file and folder comparison tool",
-      "checksum": "067d71a5a887fa6f0f242746d1ee6a4377c5cc9b88292d3722232c361713b620",
+      "checksum": "6cca348ab20b7c16a931de666e4ce6f8da664d582b160100f3f9b654b603a055",
       "fileType": "MSI Executable",
-      "vtLink": "https://www.virustotal.com/gui/file/067d71a5a887fa6f0f242746d1ee6a4377c5cc9b88292d3722232c361713b620",
-      "downloadUrl": "https://github.com/dipta-roy/TwinScope/releases/download/v1.2.1/TwinScope_Setup_1.2.1.msi",
+      "vtLink": "https://www.virustotal.com/gui/file/6cca348ab20b7c16a931de666e4ce6f8da664d582b160100f3f9b654b603a055",
+      "downloadUrl": "https://github.com/dipta-roy/TwinScope/releases/download/v1.2.2/TwinScope_Setup_1.2.2.msi",
       "icon": "fas fa-download"
     },
     {
